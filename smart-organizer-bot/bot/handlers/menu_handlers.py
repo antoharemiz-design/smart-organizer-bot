@@ -75,11 +75,39 @@ async def menu_export(message: Message, calendar_service):
     )
     os.remove(temp_path)
 
+
 @router.message(F.text == "📊 Статистика")
 async def menu_stats(message: Message, calendar_service):
     """Обработчик кнопки 'Статистика'."""
     from bot.handlers.stats import cmd_stats
     await cmd_stats(message, calendar_service)
+
+
+@router.message(F.text == "❌ Удалить задачу")
+async def menu_delete_task(message: Message, calendar_service, state):
+    """Обработчик кнопки 'Удалить задачу'."""
+    from bot.handlers.delete_task import menu_delete_task as del_task
+    await del_task(message, calendar_service, state)
+
+
+@router.message(F.text == "🌐 Веб-интерфейс")
+async def menu_web(message: Message):
+    """Обработчик кнопки 'Веб-интерфейс'."""
+    await message.answer(
+        "🌐 <b>Веб-интерфейс ваших задач:</b>\n\n"
+        "https://smart-organizer-bot.onrender.com\n\n"
+        "<i>Откройте в браузере для просмотра всех задач.</i>",
+        parse_mode="HTML",
+        disable_web_page_preview=True
+    )
+
+
+@router.message(F.text == "⚙️ Настройки")
+async def menu_settings(message: Message, calendar_service):
+    """Обработчик кнопки 'Настройки'."""
+    from bot.handlers.settings_handler import cmd_settings
+    await cmd_settings(message, calendar_service)
+
 
 @router.message(F.text == "⚙️ Помощь")
 async def menu_help(message: Message):
@@ -100,19 +128,12 @@ async def menu_help(message: Message):
         "<b>Кнопки меню:</b>\n"
         "📋 Мои задачи — задачи на сегодня\n"
         "📅 Календарь — просмотр по датам\n"
+        "📊 Статистика — продуктивность\n"
         "📤 Экспорт — выгрузка в файл\n"
+        "🌐 Веб-интерфейс — просмотр в браузере\n"
+        "❌ Удалить задачу — удаление\n"
+        "⚙️ Настройки — время утра/вечера\n"
         "⚙️ Помощь — это сообщение\n\n"
         "<i>Есть вопросы? Пишите моему создателю @Anton_Sergeevich_7!</i>"
     )
-
-    @router.message(F.text == "🌐 Веб-интерфейс")
-    async def menu_web(message: Message):
-        """Обработчик кнопки 'Веб-интерфейс'."""
-        await message.answer(
-            "🌐 <b>Веб-интерфейс ваших задач:</b>\n\n"
-            "https://smart-organizer-bot.onrender.com\n\n"
-            "<i>Откройте в браузере для просмотра всех задач.</i>",
-            parse_mode="HTML",
-            disable_web_page_preview=True
-        )
     await message.answer(help_text, parse_mode="HTML")
