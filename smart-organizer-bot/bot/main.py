@@ -59,8 +59,8 @@ async def main():
     dp.include_router(callbacks.router)
     dp.include_router(voice_input.router)
     dp.include_router(delete_task.router)
-    dp.include_router(menu_handlers.router)
-    dp.include_router(task_input.router)
+    dp.include_router(menu_handlers.router)  # ← ДО task_input
+    dp.include_router(task_input.router)  # ← ПОСЛЕ menu_handlers
     dp.include_router(unknown.router)
 
     # Запуск веб-сервера в отдельном потоке
