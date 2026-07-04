@@ -1,11 +1,17 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, URLInputFile
+from aiogram.types import Message, URLInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from bot.keyboards.main_menu import get_main_keyboard
+from common.channel_check import check_subscription
 
 router = Router()
+
+CHANNEL_URL = "https://t.me/architectkulees"
+SHARE_URL = "https://t.me/share/url?url=https://t.me/UmniyOrganaizerBot&text=🤖%20Умный%20органайзер%20с%20AI%20—%20попробуй!"
+
+WELCOME_IMAGE_URL = "https://img.freepik.com/free-vector/organizer-concept-illustration_114360-5229.jpg"
 
 
 class Onboarding(StatesGroup):
@@ -13,14 +19,52 @@ class Onboarding(StatesGroup):
     waiting_for_timezone = State()
 
 
-# URL красивой картинки для приветствия
-WELCOME_IMAGE_URL = "https://img.freepik.com/free-vector/organizer-concept-illustration_114360-5229.jpg"
-
-
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    """Приветствие с красивой картинкой и описанием."""
+    """Приветствие с проверкой подписки."""
 
+    # Проверяем подписку
+    is_subscribed = await check_subscription(message.bot, message.from_user.id)
+
+    if not is_subscribed:
+        # Просим подписаться
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📢 Подписаться на канал", url=CHANNEL_URL)],
+            [InlineKeyboardButton(text="✅ Проверить подписку", callback_data="check_sub")]
+        ])
+
+        await message.answer_photo(
+            photo=URLInputFile(WELCOME_IMAGE_URL),
+            caption=(
+                f"👋 <b>Здравствуйте, {message.from_user.first_name}!</b>\n\n"
+                f"Я — <b>Умный Органайзер</b> с искусственным интеллектом.\n\n"
+                f"⚠️ <b>Для использования бота подпишитесь на канал:</b>\n"
+                f"{CHANNEL_URL}\n\n"
+                f"После подписки нажмите кнопку «Проверить подписку»"
+            ),
+            parse_mode="HTML",
+            reply_markup=keyboard
+        )
+        return
+
+    # Подписан — показываем приветствие
+    await show_welcome(message, state)
+
+
+@router.callback_query(lambda c: c.data == "check_sub")
+async def check_sub(callback, state: FSMContext):
+    """Повторная проверка подписки."""
+    is_subscribed = await check_subscription(callback.bot, callback.from_user.id)
+
+    if is_subscribed:
+        await callback.message.delete()
+        await show_welcome(callback.message, state)
+    else:
+        await callback.answer("❌ Вы ещё не подписались на канал!", show_alert=True)
+
+
+async def show_welcome(message: Message, state: FSMContext):
+    """Показывает приветствие и начинает онбординг."""
     welcome_text = (
         f"👋 <b>Здравствуйте, {message.from_user.first_name}!</b>\n\n"
         f"Я — <b>Умный Органайзер</b> с искусственным интеллектом.\n"
@@ -37,14 +81,12 @@ async def cmd_start(message: Message, state: FSMContext):
         f"<i>Давайте познакомимся! Как вас зовут?</i>"
     )
 
-    # Отправляем картинку по URL
     await message.answer_photo(
         photo=URLInputFile(WELCOME_IMAGE_URL),
         caption=welcome_text,
         parse_mode="HTML",
         reply_markup=get_main_keyboard()
     )
-
     await state.set_state(Onboarding.waiting_for_name)
 
 
@@ -52,11 +94,10 @@ async def cmd_start(message: Message, state: FSMContext):
 async def process_name(message: Message, state: FSMContext):
     name = message.text.strip()
     await state.update_data(name=name)
-
     await message.answer(
         f"✨ <b>Приятно познакомиться, {name}!</b>\n\n"
         f"Для точных напоминаний мне нужно знать ваш часовой пояс.\n"
-        f"<i>Например: Europe/Moscow, Asia/Yekaterinburg, Europe/Kaliningrad</i>",
+        f"<i>Например: Europe/Moscow, Asia/Yekaterinburg</i>",
         parse_mode="HTML"
     )
     await state.set_state(Onboarding.waiting_for_timezone)
@@ -69,9 +110,13 @@ async def process_timezone(message: Message, state: FSMContext, calendar_service
     user_data = await state.get_data()
     name = user_data['name']
 
-    # Сохраняем timezone в планировщик
     if scheduler:
         scheduler.set_user_timezone(str(message.from_user.id), timezone)
+
+    # Кнопка «Поделиться»
+    share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔗 Поделиться с друзьями", url=SHARE_URL)]
+    ])
 
     final_text = (
         f"🎉 <b>Отлично, {name}! Всё готово!</b>\n\n"
@@ -89,6 +134,6 @@ async def process_timezone(message: Message, state: FSMContext, calendar_service
     await message.answer(
         final_text,
         parse_mode="HTML",
-        reply_markup=get_main_keyboard()
+        reply_markup=share_keyboard
     )
     await state.clear()
