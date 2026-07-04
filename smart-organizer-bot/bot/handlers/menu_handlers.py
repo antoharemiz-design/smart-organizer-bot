@@ -104,4 +104,15 @@ async def menu_help(message: Message):
         "⚙️ Помощь — это сообщение\n\n"
         "<i>Есть вопросы? Пишите моему создателю @Anton_Sergeevich_7!</i>"
     )
+
+    @router.message(F.text == "🌐 Веб-интерфейс")
+    async def menu_web(message: Message):
+        """Обработчик кнопки 'Веб-интерфейс'."""
+        await message.answer(
+            "🌐 <b>Веб-интерфейс ваших задач:</b>\n\n"
+            "https://smart-organizer-bot.onrender.com\n\n"
+            "<i>Откройте в браузере для просмотра всех задач.</i>",
+            parse_mode="HTML",
+            disable_web_page_preview=True
+        )
     await message.answer(help_text, parse_mode="HTML")

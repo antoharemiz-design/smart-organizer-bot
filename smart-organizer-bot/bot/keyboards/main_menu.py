@@ -13,10 +13,11 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
                 KeyboardButton(text="📤 Экспорт")
             ],
             [
-                KeyboardButton(text="❌ Удалить задачу"),
-                KeyboardButton(text="⚙️ Настройки")
+                KeyboardButton(text="🌐 Веб-интерфейс"),
+                KeyboardButton(text="❌ Удалить задачу")
             ],
             [
+                KeyboardButton(text="⚙️ Настройки"),
                 KeyboardButton(text="⚙️ Помощь")
             ]
         ],
@@ -26,7 +27,6 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
 
 
 def get_task_actions_keyboard(task_id: int) -> InlineKeyboardMarkup:
-    """Инлайн-кнопки для управления задачей."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="✅ Выполнено", callback_data=f"task_done:{task_id}"),

@@ -1,10 +1,11 @@
 """
-Веб-интерфейс для просмотра задач.
+Веб-интерфейс для просмотра задач + health-check для Cron Job.
 """
 from flask import Flask, render_template_string
 import aiosqlite
 import asyncio
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,8 @@ HTML_TEMPLATE = """
 
 async def get_tasks():
     """Получает все задачи из БД."""
+    if not os.path.exists(DB_PATH):
+        return []
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
@@ -77,5 +80,12 @@ def index():
     return render_template_string(HTML_TEMPLATE, tasks=tasks)
 
 
+@app.route("/ping")
+def ping():
+    """Health-check для Cron Job."""
+    return "OK", 200
+
+
 def run_web_server():
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
