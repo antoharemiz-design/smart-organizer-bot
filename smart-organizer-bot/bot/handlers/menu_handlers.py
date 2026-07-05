@@ -101,6 +101,13 @@ async def menu_web(message: Message):
         disable_web_page_preview=True
     )
 
+@router.message(F.text == "🕐 Время")
+async def menu_time(message: Message, scheduler):
+    """Показывает текущее время бота."""
+    from datetime import datetime
+    now = datetime.now()
+    await message.answer(f"🕐 Текущее время бота: {now.strftime('%H:%M:%S')}\n📅 Дата: {now.strftime('%d.%m.%Y')}")
+
 
 @router.message(F.text == "⚙️ Настройки")
 async def menu_settings(message: Message, calendar_service):

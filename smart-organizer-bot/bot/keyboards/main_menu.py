@@ -18,6 +18,7 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
             ],
             [
                 KeyboardButton(text="⚙️ Настройки"),
+                KeyboardButton(text="🕐 Время")
                 KeyboardButton(text="⚙️ Помощь")
             ]
         ],

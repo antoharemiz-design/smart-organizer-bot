@@ -8,7 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config.settings import settings
 from bot.handlers import (
     start, task_input, tasks_view, calendar_view,
-    callbacks, voice_input, export_calendar, menu_handlers,
+    callbacks, export_calendar, menu_handlers,
     stats, delete_task, settings_handler, unknown
 )
 from bot.middlewares.dependency_injection import DIMiddleware
@@ -57,7 +57,6 @@ async def main():
     dp.include_router(stats.router)
     dp.include_router(settings_handler.router)
     dp.include_router(callbacks.router)
-    dp.include_router(voice_input.router)
     dp.include_router(delete_task.router)
     dp.include_router(menu_handlers.router)  # ← ДО task_input
     dp.include_router(task_input.router)  # ← ПОСЛЕ menu_handlers

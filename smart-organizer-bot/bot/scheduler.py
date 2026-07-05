@@ -55,17 +55,22 @@ class TaskScheduler:
 
     async def _check_reminders(self):
         """Проверяет задачи, для которых наступило время, и отправляет напоминания."""
-        # Получаем время по часовому поясу пользователя
-        timezone_str = self.user_timezones.get(user_id, "Europe/Moscow")
-        tz = pytz.timezone(timezone_str)
-        now = datetime.now(tz)
-        current_time = now.strftime("%H:%M")
-        today = now.date()
-
         users = list(self.user_timezones.keys())
 
         for user_id in users:
             try:
+                # Получаем часовой пояс пользователя
+                timezone_str = self.user_timezones.get(user_id, "Europe/Moscow")
+
+                # Получаем текущее время в UTC и конвертируем
+                from datetime import timezone as tz
+                import pytz
+
+                user_tz = pytz.timezone(timezone_str)
+                now = datetime.now(user_tz)
+                current_time = now.strftime("%H:%M")
+                today = now.date()
+
                 tasks = await self.calendar_service.get_tasks(str(user_id), today)
 
                 for task in tasks:
@@ -73,20 +78,22 @@ class TaskScheduler:
                     task_time = task.get("event_time")
                     is_all_day = task.get("is_all_day", 0)
 
-                    # Пропускаем задачи на весь день и без времени
                     if is_all_day or not task_time:
                         continue
 
-                    # Проверяем, совпадает ли время задачи с текущим
                     if task_time == current_time:
-                        # Проверяем, не отправляли ли уже напоминание
                         if user_id not in self._reminder_checks:
                             self._reminder_checks[user_id] = set()
 
                         if task_id not in self._reminder_checks[user_id]:
                             title = task.get("title", "Без названия")
 
-                            keyboard = get_task_actions_keyboard(task_id)
+                            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                                [
+                                    InlineKeyboardButton(text="✅ Выполнено", callback_data=f"task_done:{task_id}"),
+                                    InlineKeyboardButton(text="🔄 Перенести", callback_data=f"task_move:{task_id}")
+                                ]
+                            ])
 
                             await self.bot.send_message(
                                 int(user_id),
@@ -103,8 +110,9 @@ class TaskScheduler:
             except Exception as e:
                 logger.error(f"Failed to check reminders for {user_id}: {e}")
 
-        # Очищаем старые напоминания (каждый день в полночь)
-        if current_time == "00:00":
+        # Очистка старых напоминаний в полночь
+        now = datetime.now()
+        if now.hour == 0 and now.minute == 0:
             self._reminder_checks.clear()
 
     async def _send_evening_review(self):
