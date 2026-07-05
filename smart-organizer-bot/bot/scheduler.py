@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import pytz
 from datetime import datetime, date, time as dt_time
 import aioschedule
 from aiogram import Bot
@@ -54,7 +55,10 @@ class TaskScheduler:
 
     async def _check_reminders(self):
         """Проверяет задачи, для которых наступило время, и отправляет напоминания."""
-        now = datetime.now()
+        # Получаем время по часовому поясу пользователя
+        timezone_str = self.user_timezones.get(user_id, "Europe/Moscow")
+        tz = pytz.timezone(timezone_str)
+        now = datetime.now(tz)
         current_time = now.strftime("%H:%M")
         today = now.date()
 

@@ -9,3 +9,4 @@ better-profanity>=0.7
 pydantic>=2.0
 pydantic-settings>=2.0
 flask>=3.0
+pytz>=2024.1
