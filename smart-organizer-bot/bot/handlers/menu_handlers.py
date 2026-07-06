@@ -101,12 +101,23 @@ async def menu_web(message: Message):
         disable_web_page_preview=True
     )
 
+
 @router.message(F.text == "🕐 Время")
 async def menu_time(message: Message, scheduler):
-    """Показывает текущее время бота."""
     from datetime import datetime
-    now = datetime.now()
-    await message.answer(f"🕐 Текущее время бота: {now.strftime('%H:%M:%S')}\n📅 Дата: {now.strftime('%d.%m.%Y')}")
+    import pytz
+
+    # Берём часовой пояс пользователя
+    user_id = str(message.from_user.id)
+    timezone_str = scheduler.user_timezones.get(user_id, "Europe/Moscow")
+    user_tz = pytz.timezone(timezone_str)
+    now = datetime.now(user_tz)
+
+    await message.answer(
+        f"🕐 Текущее время: {now.strftime('%H:%M:%S')}\n"
+        f"📅 Дата: {now.strftime('%d.%m.%Y')}\n"
+        f"🌍 Часовой пояс: {timezone_str}"
+    )
 
 
 @router.message(F.text == "⚙️ Настройки")
