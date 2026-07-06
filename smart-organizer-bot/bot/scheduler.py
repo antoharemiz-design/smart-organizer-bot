@@ -25,14 +25,20 @@ class TaskScheduler:
         logger.info(f"User {user_id} timezone set to {timezone}")
 
     async def _send_morning_greeting(self):
-        """Утреннее приветствие с планами на день (8:00 МСК)."""
+        """Утреннее приветствие с планами на день."""
+        import pytz
         logger.info("Morning greeting triggered")
-        today = date.today()
+
         users = list(self.user_timezones.keys())
 
         for user_id in users:
             try:
+                timezone_str = self.user_timezones.get(user_id, "Europe/Moscow")
+                user_tz = pytz.timezone(timezone_str)
+                today = datetime.now(user_tz).date()
+
                 tasks = await self.calendar_service.get_tasks(str(user_id), today)
+
                 if tasks:
                     lines = [f"🌅 <b>Доброе утро! Планы на сегодня ({today.strftime('%d.%m.%Y')}):</b>\n"]
                     for task in tasks:
@@ -55,17 +61,14 @@ class TaskScheduler:
 
     async def _check_reminders(self):
         """Проверяет задачи, для которых наступило время, и отправляет напоминания."""
+        import pytz
+
         users = list(self.user_timezones.keys())
 
         for user_id in users:
             try:
-                # Получаем часовой пояс пользователя
+                # Берём часовой пояс пользователя (из онбординга)
                 timezone_str = self.user_timezones.get(user_id, "Europe/Moscow")
-
-                # Получаем текущее время в UTC и конвертируем
-                from datetime import timezone as tz
-                import pytz
-
                 user_tz = pytz.timezone(timezone_str)
                 now = datetime.now(user_tz)
                 current_time = now.strftime("%H:%M")
@@ -110,19 +113,25 @@ class TaskScheduler:
             except Exception as e:
                 logger.error(f"Failed to check reminders for {user_id}: {e}")
 
-        # Очистка старых напоминаний в полночь
-        now = datetime.now()
-        if now.hour == 0 and now.minute == 0:
+        # Очистка в полночь по Москве
+        moscow_tz = pytz.timezone("Europe/Moscow")
+        moscow_now = datetime.now(moscow_tz)
+        if moscow_now.hour == 0 and moscow_now.minute == 0:
             self._reminder_checks.clear()
 
     async def _send_evening_review(self):
-        """Вечерний опрос с кнопками «Выполнено / Перенести / Удалить»."""
+        """Вечерний опрос с кнопками."""
+        import pytz
         logger.info("Evening review triggered")
-        today = date.today()
+
         users = list(self.user_timezones.keys())
 
         for user_id in users:
             try:
+                timezone_str = self.user_timezones.get(user_id, "Europe/Moscow")
+                user_tz = pytz.timezone(timezone_str)
+                today = datetime.now(user_tz).date()
+
                 tasks = await self.calendar_service.get_tasks(str(user_id), today)
                 if not tasks:
                     continue
@@ -132,7 +141,6 @@ class TaskScheduler:
                     title = task.get("title", "Без названия")
                     time_str = task.get("event_time", "")
 
-                    # Используем общую клавиатуру с тремя кнопками
                     keyboard = get_task_actions_keyboard(task_id)
 
                     text = f"🌙 <b>Вечерняя проверка</b>\n\nЗадача: {title}"
@@ -140,12 +148,7 @@ class TaskScheduler:
                         text += f"\nВремя: {time_str}"
                     text += "\n\nЧто с ней?"
 
-                    await self.bot.send_message(
-                        int(user_id),
-                        text,
-                        reply_markup=keyboard,
-                        parse_mode="HTML"
-                    )
+                    await self.bot.send_message(int(user_id), text, reply_markup=keyboard, parse_mode="HTML")
                     await asyncio.sleep(0.5)
             except Exception as e:
                 logger.error(f"Failed to send evening review to {user_id}: {e}")
