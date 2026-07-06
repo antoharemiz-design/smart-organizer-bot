@@ -165,21 +165,30 @@ class TaskScheduler:
 
     def start(self):
         """Запуск планировщика."""
-        # Утреннее приветствие в 8:00
-        aioschedule.every().day.at("08:00").do(self._send_morning_greeting)
-
-        # Проверка напоминаний каждую минуту
-        aioschedule.every(1).minutes.do(self._check_reminders)
-
-        # Вечерний опрос в 21:00
-        aioschedule.every().day.at("21:00").do(self._send_evening_review)
-
         logger.info("Scheduler started: morning 08:00, reminders every minute, evening 21:00")
         self._task = asyncio.create_task(self._run_scheduler())
 
     async def _run_scheduler(self):
+        """Главный цикл планировщика."""
         while True:
-            await aioschedule.run_pending()
+            try:
+                now = datetime.now()
+                current_time = now.strftime("%H:%M")
+
+                # Проверка напоминаний каждую минуту
+                await self._check_reminders()
+
+                # Утреннее приветствие в 08:00
+                if current_time == "08:00":
+                    await self._send_morning_greeting()
+
+                # Вечерний опрос в 21:00
+                if current_time == "21:00":
+                    await self._send_evening_review()
+
+            except Exception as e:
+                logger.error(f"Scheduler error: {e}")
+
             await asyncio.sleep(30)  # Проверка каждые 30 секунд
 
     async def stop(self):
