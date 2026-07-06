@@ -65,6 +65,8 @@ class TaskScheduler:
 
         users = list(self.user_timezones.keys())
 
+        logger.info(f"Checking reminders for {len(users)} users")
+
         for user_id in users:
             try:
                 # Берём часовой пояс пользователя (из онбординга)
@@ -74,7 +76,11 @@ class TaskScheduler:
                 current_time = now.strftime("%H:%M")
                 today = now.date()
 
+                logger.info(f"User {user_id}: time={current_time}, date={today}, tz={timezone_str}")
+
                 tasks = await self.calendar_service.get_tasks(str(user_id), today)
+
+                logger.info(f"User {user_id}: found {len(tasks)} tasks for today")
 
                 for task in tasks:
                     task_id = task.get("id")
@@ -83,6 +89,9 @@ class TaskScheduler:
 
                     if is_all_day or not task_time:
                         continue
+
+                    logger.info(
+                        f"Task {task_id}: time={task_time}, current={current_time}, match={task_time == current_time}")
 
                     if task_time == current_time:
                         if user_id not in self._reminder_checks:
@@ -113,11 +122,12 @@ class TaskScheduler:
             except Exception as e:
                 logger.error(f"Failed to check reminders for {user_id}: {e}")
 
-        # Очистка в полночь по Москве
+        # Очистка старых напоминаний в полночь по Москве
         moscow_tz = pytz.timezone("Europe/Moscow")
         moscow_now = datetime.now(moscow_tz)
         if moscow_now.hour == 0 and moscow_now.minute == 0:
             self._reminder_checks.clear()
+            logger.info("Cleared reminder checks for new day")
 
     async def _send_evening_review(self):
         """Вечерний опрос с кнопками."""
