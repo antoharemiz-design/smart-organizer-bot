@@ -96,8 +96,17 @@ async def process_name(message: Message, state: FSMContext):
     await state.update_data(name=name)
     await message.answer(
         f"✨ <b>Приятно познакомиться, {name}!</b>\n\n"
-        f"Для точных напоминаний мне нужно знать ваш часовой пояс.\n"
-        f"<i>Например: Europe/Moscow, Asia/Yekaterinburg</i>",
+        f"Для точных напоминаний мне нужно знать ваш часовой пояс.\n\n"
+        f"<b>Выберите и введите свой город:</b>\n"
+        f"• Калининград — <code>Europe/Kaliningrad</code>\n"
+        f"• Москва, Краснодар, Казань — <code>Europe/Moscow</code>\n"
+        f"• Самара, Ижевск — <code>Europe/Samara</code>\n"
+        f"• Екатеринбург, Челябинск — <code>Asia/Yekaterinburg</code>\n"
+        f"• Омск — <code>Asia/Omsk</code>\n"
+        f"• Красноярск — <code>Asia/Krasnoyarsk</code>\n"
+        f"• Иркутск — <code>Asia/Irkutsk</code>\n"
+        f"• Владивосток, Хабаровск — <code>Asia/Vladivostok</code>\n\n"
+        f"<i>Просто напишите код в ответ (например: Europe/Moscow)</i>",
         parse_mode="HTML"
     )
     await state.set_state(Onboarding.waiting_for_timezone)
@@ -123,7 +132,7 @@ async def process_timezone(message: Message, state: FSMContext, calendar_service
         f"⏰ Часовой пояс: <b>{timezone}</b>\n\n"
         f"📝 <b>Как создавать задачи:</b>\n"
         f"• Текст: «Позвонить врачу завтра в 10»\n"
-        f"• Голос: просто скажите что и когда\n\n"
+        f"• Текст: просто напишите что и когда\n\n"
         f"🔔 <b>Я буду:</b>\n"
         f"• Присылать план на день в 8:00\n"
         f"• Напоминать точно в указанное время\n"
