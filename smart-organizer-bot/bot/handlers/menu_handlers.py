@@ -95,7 +95,7 @@ async def menu_web(message: Message):
     """Обработчик кнопки 'Веб-интерфейс'."""
     await message.answer(
         "🌐 <b>Веб-интерфейс ваших задач:</b>\n\n"
-        "https://smart-organizer-bot.onrender.com\n\n"
+        "https://smart-organizer-bot-5s7c.onrender.com\n\n"
         "<i>Откройте в браузере для просмотра всех задач.</i>",
         parse_mode="HTML",
         disable_web_page_preview=True
